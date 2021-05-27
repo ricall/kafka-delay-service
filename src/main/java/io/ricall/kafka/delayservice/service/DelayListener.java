@@ -52,25 +52,22 @@ public class DelayListener {
     private final KafkaTemplate<String, String> template;
 
     @SneakyThrows
-    @Transactional
     @KafkaListener(topics = "#{__listener.topic.name}", clientIdPrefix = "#{__listener.topic.name}-client", containerFactory = "batchListenerFactory")
     public void onDelayMessage(List<Message<String>> messages) {
         final CountDownLatch latch = new CountDownLatch(messages.size());
 
-        final List<Message<String>> sendMessages = new CopyOnWriteArrayList<>();
         Flux.fromIterable(messages)
                 .flatMap(this::delayMessage)
                 .map(messageRouter::routeMessage)
                 .doOnEach(m -> latch.countDown())
                 .doOnError(m -> latch.countDown())
-                .subscribe(sendMessages::add);
+                .subscribe(template::send);
 
         boolean finished = latch.await(30_000, TimeUnit.MILLISECONDS);
         if (!finished) {
             log.error("Failed to process all messages");
             throw new IllegalStateException("Failed to process all messages");
         }
-        sendMessages.forEach(template::send);
     }
 
     @SneakyThrows

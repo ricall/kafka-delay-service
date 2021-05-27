@@ -21,7 +21,7 @@ spring:
   kafka:
     client-id: delay-client
     producer:
-      transaction-id-prefix: delay-tx
+#      transaction-id-prefix: delay-tx
       key-serializer: org.apache.kafka.common.serialization.StringSerializer
       value-serializer: org.apache.kafka.common.serialization.StringSerializer
       acks: all
@@ -30,7 +30,7 @@ spring:
     consumer:
       group-id: delay
       enable-auto-commit: false
-      isolation-level: read_committed
+      isolation-level: read_uncommitted
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       max-poll-records: 50

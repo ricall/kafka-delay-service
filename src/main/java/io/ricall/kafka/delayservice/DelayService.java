@@ -50,7 +50,6 @@ public class DelayService {
     private final KafkaTemplate<String, String> template;
 
     @SneakyThrows
-    @Transactional
     @KafkaListener(topics = "#{@delayTopic.name}", clientIdPrefix = "delay-client", containerFactory = "batchListenerFactory")
     public void onDelayMessage(List<Message<String>> messages) {
         messages.stream()

@@ -1,0 +1,43 @@
+server:
+  port: 8082
+
+delay:
+  request: dev.delay.request
+  request-dlq: dev.delay.request.dlq
+  internal1:
+    name: dev.delay.internal.topic1
+    delay: 500ms
+  internal2:
+    name: dev.delay.internal.topic2
+    delay: 1s
+  internal3:
+    name: dev.delay.internal.topic3
+    delay: 5s
+  internal4:
+    name: dev.delay.internal.topic4
+    delay: 17s
+
+spring:
+  kafka:
+    client-id: delay-client
+    producer:
+      transaction-id-prefix: delay-tx
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        linger.ms: 10
+    consumer:
+      group-id: delay
+      enable-auto-commit: false
+      isolation-level: read_committed
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 50
+      auto-offset-reset: earliest
+
+logging:
+  level:
+    org.apache.kafka.clients.admin.AdminClientConfig: WARN
+    org.apache.kafka.clients.producer.ProducerConfig: WARN
+    org.apache.kafka.clients.consumer.ConsumerConfig: WARN

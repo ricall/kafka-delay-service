@@ -1,0 +1,3 @@
+rootProject.name = 'delay-service'
+
+include ':delay-client'

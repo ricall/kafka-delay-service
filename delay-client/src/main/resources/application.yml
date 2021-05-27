@@ -1,0 +1,31 @@
+server:
+  port: 8383
+
+delay-client:
+  processing-topic: dev.process.request
+  delay-topic: dev.delay.request
+
+spring:
+  kafka:
+    client-id: delay-client
+    producer:
+      key-serializer: org.apache.kafka.common.serialization.StringSerializer
+      value-serializer: org.apache.kafka.common.serialization.StringSerializer
+      acks: all
+      properties:
+        linger.ms: 10
+
+    consumer:
+      group-id: client
+      enable-auto-commit: false
+      isolation-level: read_committed
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      max-poll-records: 1
+      auto-offset-reset: earliest
+
+logging:
+  level:
+    org.apache.kafka.clients.admin.AdminClientConfig: WARN
+    org.apache.kafka.clients.producer.ProducerConfig: WARN
+    org.apache.kafka.clients.consumer.ConsumerConfig: WARN

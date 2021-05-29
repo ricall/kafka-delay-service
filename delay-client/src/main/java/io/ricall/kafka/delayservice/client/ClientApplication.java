@@ -62,8 +62,8 @@ public class ClientApplication {
         return args -> {
             log.info("Application starting");
             Flux.range(1, 1_000)
-                    .delayElements(Duration.ofMillis(20))
-                    .subscribe(i -> sendMessage(i, i % 20));
+                    .delayElements(Duration.ofMillis(5))
+                    .subscribe(i -> sendMessage(i, i % 50));
         };
     }
 

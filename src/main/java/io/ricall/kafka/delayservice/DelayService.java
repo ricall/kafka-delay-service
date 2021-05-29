@@ -25,6 +25,7 @@ package io.ricall.kafka.delayservice;
 import io.ricall.kafka.delayservice.config.DelayProperties;
 import io.ricall.kafka.delayservice.service.DelayHeaders;
 import io.ricall.kafka.delayservice.service.MessageRouter;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -33,7 +34,6 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
 import java.util.List;
@@ -41,6 +41,7 @@ import java.util.List;
 import static io.ricall.kafka.delayservice.service.DelayHeaders.DELIVERY_TIME;
 import static io.ricall.kafka.delayservice.service.DelayHeaders.RETIRES;
 
+@Getter
 @Component
 @RequiredArgsConstructor
 public class DelayService {
@@ -50,7 +51,7 @@ public class DelayService {
     private final KafkaTemplate<String, String> template;
 
     @SneakyThrows
-    @KafkaListener(topics = "#{@delayTopic.name}", clientIdPrefix = "delay-client", containerFactory = "batchListenerFactory")
+    @KafkaListener(topics = "#{__listener.properties.request}", clientIdPrefix = "delay-client", containerFactory = "batchListenerFactory")
     public void onDelayMessage(List<Message<String>> messages) {
         messages.stream()
                 .map(this::createDelayMessage)

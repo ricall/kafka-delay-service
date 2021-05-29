@@ -23,7 +23,8 @@
 
 package io.ricall.kafka.delayservice.service;
 
-import lombok.experimental.UtilityClass;
+import lombok.AccessLevel;
+import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.MessageHeaders;
 import org.springframework.util.StringUtils;
 
@@ -32,6 +33,7 @@ import java.util.Optional;
 
 import static org.springframework.kafka.support.KafkaHeaders.RECEIVED_TIMESTAMP;
 
+@RequiredArgsConstructor(access = AccessLevel.PRIVATE)
 public class DelayHeaders {
 
     public static final String PREFIX = "delay_";
@@ -50,11 +52,7 @@ public class DelayHeaders {
         return new DelayHeaders(headers);
     }
 
-    private MessageHeaders headers;
-
-    private DelayHeaders(MessageHeaders headers) {
-        this.headers = headers;
-    }
+    private final MessageHeaders headers;
 
     public boolean hasTopic() {
         String topic = headers.get(TOPIC, String.class);
@@ -74,7 +72,7 @@ public class DelayHeaders {
 
     public long getMessageReceivedTimestamp() {
         return Optional.ofNullable(headers.get(RECEIVED_TIMESTAMP, Long.class))
-                .orElseThrow(() -> new MissingHeaderException(RECEIVED_TIMESTAMP));
+                .orElseThrow(IllegalStateException::new);
     }
 
     public boolean isExponentialBackoff() {
@@ -85,7 +83,7 @@ public class DelayHeaders {
 
     public static long getDeliveryTimeForMessage(MessageHeaders headers) {
         return Optional.ofNullable(headers.get(DELIVERY_TIME, Long.class))
-                .orElseThrow(() -> new MissingHeaderException(DELIVERY_TIME));
+                .orElseThrow(IllegalAccessError::new);
     }
 
 }

@@ -24,12 +24,6 @@
 package io.ricall.kafka.delayservice.client;
 
 import lombok.experimental.UtilityClass;
-import org.springframework.messaging.MessageHeaders;
-
-import java.time.Duration;
-import java.util.Optional;
-
-import static org.springframework.kafka.support.KafkaHeaders.RECEIVED_TIMESTAMP;
 
 @UtilityClass
 public class DelayHeaders {

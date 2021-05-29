@@ -30,3 +30,7 @@ $ ./gradlew delay-client:bootRun
 
 The client will schedule 1000 messages with varying delay intervals (in seconds)
 
+TODO:
+- Uses Reactor Kafka to process messages (see. 
+  https://projectreactor.io/docs/kafka/release/reference/#_what_s_new_in_reactor_kafka_1_2_0_release 7.10. Exactly-Once delivery)
+

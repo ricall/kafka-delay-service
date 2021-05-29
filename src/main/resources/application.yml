@@ -6,16 +6,16 @@ delay:
   request-dlq: dev.delay.request.dlq
   internal1:
     name: dev.delay.internal.topic1
-    delay: 500ms
+    delay: 1s
   internal2:
     name: dev.delay.internal.topic2
-    delay: 1s
+    delay: 5s
   internal3:
     name: dev.delay.internal.topic3
-    delay: 5s
+    delay: 17s
   internal4:
     name: dev.delay.internal.topic4
-    delay: 17s
+    delay: 37s
 
 spring:
   kafka:
@@ -33,7 +33,7 @@ spring:
       isolation-level: read_uncommitted
       key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
       value-deserializer: org.apache.kafka.common.serialization.StringDeserializer
-      max-poll-records: 50
+      max-poll-records: 500
       auto-offset-reset: earliest
 
 logging:

@@ -22,10 +22,12 @@
  */
 package io.ricall.kafka.delayservice.config;
 
+import io.ricall.kafka.delayservice.config.DelayProperties.DelayTopic;
 import io.ricall.kafka.delayservice.service.DelayListener;
 import io.ricall.kafka.delayservice.service.MessageRouter;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;
+import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
 import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -33,6 +35,10 @@ import org.springframework.kafka.config.ConcurrentKafkaListenerContainerFactory;
 import org.springframework.kafka.config.TopicBuilder;
 import org.springframework.kafka.core.DefaultKafkaConsumerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.util.StringUtils;
+
+import java.util.Collection;
+import java.util.stream.Collectors;
 
 @Configuration
 @RequiredArgsConstructor
@@ -41,47 +47,19 @@ public class DelayConfiguration {
     private final DelayProperties properties;
     private final MessageRouter handler;
     private final KafkaTemplate<String, String> template;
+    private final ConfigurableListableBeanFactory beanFactory;
 
     @Bean
-    NewTopic delayTopic() {
-        return TopicBuilder.name(properties.getRequest())
-                .partitions(1)
-                .build();
+    Collection<NewTopic> topics() {
+        return properties.topicNames().stream()
+                .map(this::createTopic)
+                .collect(Collectors.toList());
     }
 
-    @Bean
-    NewTopic delayDlqTopic() {
-        return TopicBuilder.name(properties.getRequestDlq())
+    NewTopic createTopic(String name) {
+        return registerBean("topic", name, TopicBuilder.name(name)
                 .partitions(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic internalTopic1() {
-        return TopicBuilder.name(properties.getInternal1().getName())
-                .partitions(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic internalTopic2() {
-        return TopicBuilder.name(properties.getInternal2().getName())
-                .partitions(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic internalTopic3() {
-        return TopicBuilder.name(properties.getInternal3().getName())
-                .partitions(1)
-                .build();
-    }
-
-    @Bean
-    NewTopic internalTopic4() {
-        return TopicBuilder.name(properties.getInternal4().getName())
-                .partitions(1)
-                .build();
+                .build());
     }
 
     @Bean
@@ -93,40 +71,27 @@ public class DelayConfiguration {
     }
 
     @Bean
-    DelayListener internal1Listener() {
-        return DelayListener.builder()
-                .topic(properties.getInternal1())
-                .messageRouter(handler)
-                .template(template)
-                .build();
+    Collection<DelayListener> internalTopicListeners() {
+        return properties.internalTopics().stream()
+                .map(this::createTopicListener)
+                .collect(Collectors.toList());
     }
 
-    @Bean
-    DelayListener internal2Listener() {
-        return DelayListener.builder()
-                .topic(properties.getInternal2())
+    DelayListener createTopicListener(DelayTopic topic) {
+        return registerBean("listener", topic.getName(), DelayListener.builder()
+                .topic(topic)
                 .messageRouter(handler)
                 .template(template)
-                .build();
-
+                .build());
     }
 
-    @Bean
-    DelayListener internal3Listener() {
-        return DelayListener.builder()
-                .topic(properties.getInternal3())
-                .messageRouter(handler)
-                .template(template)
-                .build();
-    }
+    private <T> T registerBean(String prefix, String name, T bean) {
+        String beanName = prefix + StringUtils.capitalize(name);
+        beanFactory.applyBeanPostProcessorsBeforeInitialization(bean, beanName);
+        beanFactory.registerSingleton(beanName, bean);
+        beanFactory.applyBeanPostProcessorsAfterInitialization(bean, beanName);
 
-    @Bean
-    DelayListener internal4Listener() {
-        return DelayListener.builder()
-                .topic(properties.getInternal4())
-                .messageRouter(handler)
-                .template(template)
-                .build();
+        return bean;
     }
 
 }

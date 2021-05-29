@@ -26,6 +26,9 @@ import lombok.Data;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 
 import java.time.Duration;
+import java.util.Collection;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Data
 @ConfigurationProperties("delay")
@@ -37,6 +40,16 @@ public class DelayProperties {
     private DelayTopic internal2;
     private DelayTopic internal3;
     private DelayTopic internal4;
+
+    public Collection<String> topicNames() {
+        return Stream.of(request, requestDlq, internal1.name, internal2.name, internal3.name, internal4.name)
+                .collect(Collectors.toList());
+    }
+
+    public Collection<DelayTopic> internalTopics() {
+        return Stream.of(internal1, internal2, internal3, internal4)
+                .collect(Collectors.toList());
+    }
 
     @Data
     public static class DelayTopic {

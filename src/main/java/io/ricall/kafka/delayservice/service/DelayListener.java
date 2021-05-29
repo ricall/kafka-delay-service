@@ -31,15 +31,16 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.messaging.Message;
-import org.springframework.transaction.annotation.Transactional;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.Optional;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+
+import static java.util.Comparator.comparingLong;
 
 @Slf4j
 @Getter
@@ -52,34 +53,46 @@ public class DelayListener {
     private final KafkaTemplate<String, String> template;
 
     @SneakyThrows
-    @KafkaListener(topics = "#{__listener.topic.name}", clientIdPrefix = "#{__listener.topic.name}-client", containerFactory = "batchListenerFactory")
+    @KafkaListener(topics = "#{__listener.topic.name}",
+            clientIdPrefix = "#{__listener.topic.name}-client",
+            containerFactory = "batchListenerFactory")
     public void onDelayMessage(List<Message<String>> messages) {
         final CountDownLatch latch = new CountDownLatch(messages.size());
-
         Flux.fromIterable(messages)
-                .flatMap(this::delayMessage)
                 .map(messageRouter::routeMessage)
+                .sort(comparingLong(this::deliveryTime))
+                .flatMap(this::delayMessage)
+                .flatMap(this::sendMessage)
                 .doOnEach(m -> latch.countDown())
                 .doOnError(m -> latch.countDown())
-                .subscribe(template::send);
+                .subscribe();
 
-        boolean finished = latch.await(30_000, TimeUnit.MILLISECONDS);
-        if (!finished) {
-            log.error("Failed to process all messages");
-            throw new IllegalStateException("Failed to process all messages");
+        boolean processed = latch.await(120_000, TimeUnit.MILLISECONDS);
+        if (!processed) {
+            throw new IllegalStateException("Timed out waiting for message");
         }
+
+    }
+
+    private long deliveryTime(Message<String> message) {
+        return Optional.ofNullable(message.getHeaders().get(DelayHeaders.DELIVERY_TIME, Long.class))
+                .orElse(0L);
     }
 
     @SneakyThrows
     private Mono<Message<String>> delayMessage(Message<String> message) {
         long deliveryTime = DelayHeaders.getDeliveryTimeForMessage(message.getHeaders());
 
-        long wait = Math.min(deliveryTime - System.currentTimeMillis(), topic.getDelay().toMillis());
+        long wait = Math.min(deliveryTime - System.currentTimeMillis(), topic.getDelay().toMillis()) - 100;
         if (wait <= 0) {
             return Mono.just(message);
         }
         return Mono.just(message)
-                .delayElement(Duration.ofMillis(wait));
+                .delaySubscription(Duration.ofMillis(wait));
+    }
+
+    private Mono<Message<String>> sendMessage(Message<String> message) {
+        return Mono.create(sink -> template.send(message).addCallback(r -> sink.success(message), sink::error));
     }
 
 }

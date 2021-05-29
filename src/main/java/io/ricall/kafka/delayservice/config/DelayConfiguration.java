@@ -25,6 +25,7 @@ package io.ricall.kafka.delayservice.config;
 import io.ricall.kafka.delayservice.config.DelayProperties.DelayTopic;
 import io.ricall.kafka.delayservice.service.DelayListener;
 import io.ricall.kafka.delayservice.service.MessageRouter;
+import lombok.NonNull;
 import lombok.RequiredArgsConstructor;
 import org.apache.kafka.clients.admin.NewTopic;
 import org.springframework.beans.factory.config.ConfigurableListableBeanFactory;
@@ -56,7 +57,7 @@ public class DelayConfiguration {
                 .collect(Collectors.toList());
     }
 
-    NewTopic createTopic(String name) {
+    NewTopic createTopic(@NonNull String name) {
         return registerBean("topic", name, TopicBuilder.name(name)
                 .partitions(1)
                 .build());
@@ -77,7 +78,7 @@ public class DelayConfiguration {
                 .collect(Collectors.toList());
     }
 
-    DelayListener createTopicListener(DelayTopic topic) {
+    DelayListener createTopicListener(@NonNull DelayTopic topic) {
         return registerBean("listener", topic.getName(), DelayListener.builder()
                 .topic(topic)
                 .messageRouter(handler)
